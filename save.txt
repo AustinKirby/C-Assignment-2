@@ -1,0 +1,11 @@
+bye 50
+jack 100
+jack 100
+steve 50
+steve 50
+sam 25
+tim 20
+austin 15
+tammie 10
+tim 8
+jim 6
