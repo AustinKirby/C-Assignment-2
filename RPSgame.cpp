@@ -8,18 +8,17 @@ Student Name:	Austin Kirby
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <stdlib.h>
+#include <time.h>
  
 using namespace std;
 
-/* For debugging perposes
-* true =>  cout to console class variables on change
-* false => do nothing
+#pragma region SAVE class
+
+/*	Class SAVE
+*	name	string		used to store player name
+*	wins	int			used to store player wins
 */
-bool	DEBUG = true;
-
-string	PLAYER_NAME;
-int		PLAYER_WINS;
-
 class SAVE
 {
 public:
@@ -27,41 +26,110 @@ public:
 	int wins;
 } LOCAL_SAVE[12];
 
-/* Input and output file names
-* SAVE_FILE  ("save.txt")
+#pragma endregion
+
+#pragma region Global Variables
+
+/*	Save file name
+*	SAVE_FILE	("save.txt")
 */
 string SAVE_FILE = "save.txt";
 
+/*	Store current player variables
+*/
+string	PLAYER_NAME;
+int		PLAYER_WINS;
+
+#pragma endregion
+
+#pragma region Method Declaration
+
+/*	Used to load values from save file.
+*	Called at start of program.
+*/
 void Init();
 
+/*	Used to control the four stages of game. [ Menu, Leaderboard, Game, Quit ]
+*	Called after the Init method.
+*/
 void GameLoop();
 
+/*	Used to write to save file.
+*	Called on quiting of the game.
+*/
 void Save();
 
+/*	Used to gather player's name.
+*	Called if there is no save file when Init method is ran.
+*/
 void GetPlayerName();
 
+/*	Used to sort the local save array of players.
+*	Called when the local save array is changed.
+*/
 void SortLocalSave();
 
+/*	Used to find current player's position in the save array.
+*
+*/
 void GetPlayerSpot();
 
+/*	Used to show the player the local save array.
+*	Called when player enters 3 in menu method.
+*/
 void ShowSave();
 
+/*	Used to change the players name.
+*	Called when 2 is entered in Menu method.
+*/
 void ChangeName();
 
+/*	Used to save player to the local save array.
+*	Called when plaver is changed.
+*/
 void SavePlayer();
 
+/*	Used to play Rock Papers Sissors.
+*	Called in GameMenu and Menu.
+*/
+void Game();
+
+/*	Used to gather player input for playing the game again.
+*	Called in Menu method.
+*/
+void GameMenu();
+
+/*	Used to get player input on which game state they would like to be in. [ Menu, Leaderboard, Game, Quit ]
+*	Called in GameLoop.
+*/
 int Menu();
 
+/*	Used to retreive the length of the longest name in the local save array.
+*	Called in ShowLocalSave method.
+*/
 int GetLongestName();
+
+#pragma endregion
 
 int main()
 {
+	// Seed the random
+	srand(time(NULL));
+
+	// Load from the save file
 	Init();
+
+	// Run main game loop
 	GameLoop();
+
+	// Save local array
 	Save();
+
 	system("PAUSE");
     return 0;
 }
+
+#pragma region Prototype
 
 void Init()
 {
@@ -107,7 +175,8 @@ void GameLoop()
 		switch (choice)
 		{
 		case 1:
-
+			Game();
+			GameMenu();
 			break;
 		case 2:
 			ChangeName();
@@ -168,7 +237,7 @@ void ShowSave()
 {
 	int longestName = GetLongestName();
 	int i, z;
-	cout << "Rank  Player Name" << setw(abs(11 - longestName)) << " No Wins" << endl;
+	cout << endl << "Rank  Player Name" << setw(abs(11 - longestName)) << " No Wins" << endl;
 	for (i = 0; i < 26; i++)
 		cout << '-';
 	cout << endl;
@@ -186,6 +255,8 @@ void ShowSave()
 		}
 		cout << endl;
 	}
+	cout << endl;
+	system("PAUSE");
 }
 
 void ChangeName()
@@ -195,6 +266,8 @@ void ChangeName()
 	do
 	{
 		cout << "Enter new name:" << endl << "==> ";
+		cin.clear();
+		fflush(stdin);
 		cin >> name;
 	} while (name == "");
 	SavePlayer();
@@ -208,22 +281,34 @@ void ChangeName()
 			PLAYER_WINS = LOCAL_SAVE[i].wins;
 		}
 	}
+	LOCAL_SAVE[0].wins = PLAYER_WINS;
 }
 
 void SavePlayer()
 {
 	int i;
+	bool found = false;
 	for (i = 1; i < 11; i++)
 	{
 		if (PLAYER_NAME == LOCAL_SAVE[i].name)
 		{
 			LOCAL_SAVE[i].wins = PLAYER_WINS;
-			i = 15;
+			found = true;
 		}
 	}
-	if (i != 15)
+	if (!found)
 	{
-		if (PLAYER_WINS > LOCAL_SAVE[10].wins)
+		for (i = 1; i < 11; i++)
+		{
+			if (LOCAL_SAVE[i].name == "")
+			{
+				LOCAL_SAVE[i].name = PLAYER_NAME;
+				LOCAL_SAVE[i].wins = PLAYER_WINS;
+				found = true;
+				break;
+			}
+		}
+		if (!found && LOCAL_SAVE[10].wins < PLAYER_WINS)
 		{
 			LOCAL_SAVE[10].name = PLAYER_NAME;
 			LOCAL_SAVE[10].wins = PLAYER_WINS;
@@ -232,17 +317,89 @@ void SavePlayer()
 	SortLocalSave();
 }
 
+void Game()
+{
+	char s = 'a';
+	do
+	{
+		cout << endl << "Choose your weapon!" << endl;
+		cout << "r => Rock" << endl;
+		cout << "p => Paper" << endl;
+		cout << "s => Sissors" << endl;
+		cout << "==> ";
+		cin.clear();
+		fflush(stdin);
+		cin >> s;
+	} while (s != 'r' && s != 'p' && s != 's');
+	switch (rand() % 3 + 1)
+	{
+	case 3:  // rock
+		if (s == 'p')
+		{
+			PLAYER_WINS++;
+			LOCAL_SAVE[0].wins++;
+			cout << "You won!" << endl;
+			SavePlayer();
+		}
+		else
+			cout << "You didn't win." << endl;
+		break;
+	case 2:  // paper
+		if (s == 's')
+		{
+			PLAYER_WINS++;
+			LOCAL_SAVE[0].wins++;
+			cout << "You won!" << endl;
+			SavePlayer();
+		}
+		else
+			cout << "You didn't win." << endl;
+		break;
+	case 1:  // sissor
+		if (s == 'r')
+		{
+			PLAYER_WINS++;
+			LOCAL_SAVE[0].wins++;
+			cout << "You won!" << endl;
+			SavePlayer();
+		}
+		else
+			cout << "You didn't win." << endl;
+		break;
+	}
+}
+
+void GameMenu()
+{
+	char s = 'a';
+	do
+	{
+		cout << "Play again? [ y / n ]" << endl << "==> ";
+		cin.clear();
+		fflush(stdin);
+		cin >> s;
+	} while (s != 'y' && s != 'n');
+	if (s == 'y')
+	{
+		Game();
+		GameMenu();
+	}
+}
+
 int Menu()
 {
 	int i = -1;
 	do
 	{
+		system("cls");
 		cout << "Current Player Name: <" << PLAYER_NAME << ">" << endl << endl;
 		cout << "1 => Start the game" << endl;
 		cout << "2 => Change the player name" << endl;
 		cout << "3 => Show highest scores" << endl;
 		cout << "0 => Exit" << endl << endl;
 		cout << "What is your option?" << endl;
+		cin.clear();
+		fflush(stdin);
 		cin >> i;
 	} while (i < 0 || i > 3);
 	return i;
@@ -257,3 +414,5 @@ int GetLongestName()
 				tmp = LOCAL_SAVE[i].name.length();
 	return tmp;
 }
+
+#pragma endregion
